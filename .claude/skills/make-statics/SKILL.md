@@ -42,7 +42,11 @@ Each angle becomes one creative folder: `creatives/<YYYY-MM-DD>/<concept-id>/` w
    ```
    Vary composition between variants by editing one line of the prompt, not the offer. Open each image with Read and pick the strongest one. If none passes the checklist below, mark the brief `rejected` with the reason and stop.
 4. **Finals.** Regenerate the chosen concept with `image_models.final` for every ratio in `creative.aspect_ratios`, passing the chosen concept image as the first `--ref` plus the brand assets. Save as `final-1x1.png`, `final-4x5.png`, `final-9x16.png`. Use a stable `--key` per file so a rerun never pays twice.
-5. **Self-review.** Open every final and check:
+5. **Real screens (composite, don't trust the model).** Image models redraw app UI even when told not to: values drift off their bars, charts get re-plotted. For any final that shows a phone screen, do this instead of accepting the model's screen:
+   1. Edit the final with `image_models.final`: pass it as `--ref` and ask to "replace only the phone display with flat pure green #00FF00; keep everything else identical; keep the phone upright". A tilted phone makes even a pixel-correct screen look wrong at phone size.
+   2. `scripts/composite-screen.sh <green-plate.png> product/assets/<screen>.png creatives/<date>/c01/final-4x5.png` (needs ImageMagick 7 `magick` and python3). It finds the green quad's four corners, pads the real screenshot to that shape without stretching, warps it on and removes green spill.
+   3. Zoom into the result with Read and compare it with the source screenshot row by row. Keep rejected versions as `final-4x5-vN-rejected.png`.
+6. **Self-review.** Open every final and check:
    - [ ] Every word on the image is spelled exactly as in the brief and readable at phone size
    - [ ] Brand colors and logo are correct, logo not distorted
    - [ ] App screens come from real screenshots; no invented UI, fake buttons, fake notifications or fake play icons
@@ -50,7 +54,7 @@ Each angle becomes one creative folder: `creatives/<YYYY-MM-DD>/<concept-id>/` w
    - [ ] Text sits inside safe zones for the ratio
    - [ ] It looks like the brief, not a generic stock ad
    Record the result in `brief.json` as `review: { passed, notes }`. One retry per failing final, then set `status: "rejected"`.
-6. Set `status: "ready"` on passing briefs and list them for `launch-ads`.
+7. Set `status: "ready"` on passing briefs and list them for `launch-ads`.
 
 ## Rules
 - Generation always goes through Genviral with `scripts/genviral-image.mjs`. Never call OpenAI directly.

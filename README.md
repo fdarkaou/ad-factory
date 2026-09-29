@@ -39,7 +39,7 @@ Approvals are lines in `state/approvals.md`. Change `[ ]` to `[x]` (or tell Clau
 
 ## Requirements
 
-- **Claude Code** (or Claude Desktop with this folder) and Node.js 20 or newer.
+- **Claude Code** (or Claude Desktop with this folder) and Node.js 20 or newer. Optional but recommended: ImageMagick 7 and python3, so real app screenshots are composited into the ads instead of redrawn by the model (`scripts/composite-screen.sh`).
 - **A Genviral API key.** Image generation goes through the [Genviral Partner API](https://docs.genviral.io), never to OpenAI directly. You need a paid Genviral plan with API access and credits. Create a key under API Keys at [genviral.io](https://www.genviral.io).
 - **A Meta Ads MCP.** Default: Meta's official ads MCP server, `https://mcp.facebook.com/ads` ([docs](https://developers.facebook.com/documentation/ads-commerce/ads-ai-connectors/ads-mcp-server/ads-mcp-server-overview)). Alternative: [Pipeboard's Meta Ads MCP](https://github.com/pipeboard-co/meta-ads-mcp), `https://meta-ads.mcp.pipeboard.co/`.
 - **The PeekPanda MCP** at `https://mcp.peekpanda.com/mcp` for competitor apps and ads. Needs a PeekPanda account.
@@ -141,6 +141,7 @@ node scripts/genviral-image.mjs --help
 node scripts/genviral-image.mjs --model openai/gpt-image-2.5-sunburst --quality high --size 2K \
   --aspect 4:5 --prompt "..." --ref product/assets/logo.png --out creatives/test/final-4x5.png
 node scripts/judge-ads.mjs --insights state/insights/2026-01-15.json
+scripts/composite-screen.sh creatives/test/green-plate.png product/assets/screen.png creatives/test/final-4x5.png
 node --test scripts/*.test.mjs
 ```
 
