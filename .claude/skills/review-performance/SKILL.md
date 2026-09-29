@@ -12,11 +12,14 @@ description: Pull per-ad Meta insights for the factory's ads, apply the kill rul
 ## Steps
 
 1. **Cooldown check.** Stop if `state/meta-cooldown.json` says so.
-2. **One batch read.** Pull all ads in `meta.campaign_id` at ad level for the lifetime of each ad (or `cadence.insights_window_days` if lifetime is not offered), with spend, actions and created time.
-   - Official MCP: `ads_get_ad_entities` for ads in the campaign with spend, conversions and a date range.
+2. **One batch read.** Pull all ads in `meta.campaign_id` at ad level in one call. Do not fetch ads one by one.
+   - Official MCP: `ads_get_ad_entities` with `level: "ad"`, `filtering: [{field: "campaign_id", operator: "IN", value: [<campaign_id>]}]`, `fields: ["id", "name", "status", "created_time", "amount_spent", "results", "cost_per_result"]`, `date_preset: "maximum"`, `limit` high enough for the campaign. Verify any other field with `ads_get_field_context` first. Follow `next_cursor` if present.
    - Pipeboard: `get_insights` with `object_id` = campaign id and `level: "ad"`.
-   Do not fetch ads one by one.
-3. **Normalize.** Keep only ads whose name starts with `AF_` or that are in the ledger. Conversions = the value of the `actions` entry whose `action_type` equals `meta.conversion_action_type` (0 if absent). Write `state/insights/<YYYY-MM-DD>.json` as an array of `{ ad_id, name, status, created_time, spend, conversions }`. Spend is in account currency, not cents.
+3. **Normalize.** Keep only ads whose name starts with `AF_` or that are in the ledger. For each ad:
+   - `spend` = `amount_spent.value` as a number (account currency, not cents).
+   - `conversions`: `results.indicator` must equal `conversions:<meta.conversion_action_type>` or `actions:<meta.conversion_action_type>`. If it names a different event, stop, pause nothing and report the mismatch (the campaign optimizes for something else). If it matches, use the `default` attribution value; `"Not available"` with spend read means 0.
+   - Pipeboard: the value of the `actions` or `conversions` entry whose `action_type` equals `meta.conversion_action_type` (0 if absent).
+   Write `state/insights/<YYYY-MM-DD>.json` as an array of `{ ad_id, name, status, created_time, spend, conversions }`.
 4. **Judge.** Run `node scripts/judge-ads.mjs --insights state/insights/<date>.json`. Do not re-derive verdicts by hand. The rules, in order:
    | Verdict | Condition |
    |---|---|

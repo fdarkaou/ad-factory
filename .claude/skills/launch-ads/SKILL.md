@@ -23,12 +23,12 @@ Creates ads **paused**. Nothing goes live and no budget changes without a ticked
 ## Flow per ready brief (official Meta Ads MCP, default)
 Launch one ad per brief using the `creative.launch_aspect` final. Other ratios stay on disk for later placement work.
 
-1. **Image.** The official server lists no image upload tool. Check the `ads_create_creative` input schema in the tool list:
-   - If it takes an image URL field, pass the Genviral `output_url` from the final (public HTTPS on Genviral's CDN; it is in the script output and `brief.json`).
-   - If it only takes an `image_hash`, the image must already be in the ad account library (`ads_get_ad_images`). Do not guess a hash. Add a `manual_upload` approval with the local file path, or switch this run to the Pipeboard flow below.
-2. **Creative.** `ads_create_creative` with the page id, `link` = `app.app_store_url`, primary text, headline and CTA `meta.call_to_action` from the brief. If the tool rejects an App Store link or the install CTA, stop, record the exact error in the report and do not retry in a loop.
-3. **Ad.** `ads_create_ad` with the ad set id (first of `meta.test_ad_set_ids` with room under `creative.max_active_ads_per_ad_set`), the creative id and the name. It is created paused.
-4. **Record.** After each successful write, immediately write the returned id into the ledger row (`creative_id`, then `ad_id`, `status: "PAUSED"`, `created_at`). Then `sleep 3` in Bash before the next write.
+The official server runs in **draft mode**: `ads_create_ad` stages the ad in the account's Ads Manager draft (status `DRAFT`) and nothing serves until it is published with `ads_activate_entity`. Publishing is the activation step and always needs a ticked approval.
+
+1. **Image.** `ads_creative_upload_media` with `upload_source: "URL"`, `media_type: "IMAGE"`, `media_url` = the Genviral `output_url` of the final, `name` = the ad name. Keep the returned image hash in the ledger. (`ads_create_creative` also accepts `image_url` directly; the hash keeps the image in the library and makes reruns cheap.)
+2. **Creative.** `ads_create_creative` with `ad_account_id` (numeric, no `act_`), `page_id`, `image_hash`, `link_url` = `app.app_store_url`, `message` (primary text), `headline`, `call_to_action_type` = `meta.call_to_action` (e.g. `INSTALL_MOBILE_APP`), `name` = ad name + `_cr`, `instagram_user_id` if configured, and `self_ai_disclosure` = `meta.ai_disclosure` from config (`OPT_IN` or `OPT_OUT`; it cannot be changed later, and the choice is the advertiser's, never yours). If the tool rejects the App Store link or the CTA, stop, record the exact error and do not retry in a loop.
+3. **Ad.** `ads_create_ad` with the ad set id (first of `meta.test_ad_set_ids` with room under `creative.max_active_ads_per_ad_set`), `creative: "{\"creative_id\":\"<id>\"}"`, `ad_name`, and `hide_ui: true` when creating several. Record the returned ad id and `status: "DRAFT"` (or `PAUSED` if the server is not in draft mode). Surface any `active_errors`.
+4. **Record.** After each successful write, immediately write the returned id into the ledger row (`image_hash`, `creative_id`, then `ad_id`, `status`, `created_at`). Then `sleep 3` in Bash before the next write.
 5. **Ask.** Append one activation request per ad to `state/approvals.md`.
 
 ## Flow with Pipeboard (alternative)
@@ -44,6 +44,6 @@ The human approves by changing `[ ]` to `[x]`, or by telling Claude "approve APR
 
 ## Applying approvals
 Run this at the start of every daily loop and whenever the user asks.
-- `activate_ad`: official `ads_activate_entity`; Pipeboard `update_ad` with `status: "ACTIVE"`. Skip if the ad was paused by a kill rule since the request.
+- `activate_ad`: official `ads_activate_entity` (for a draft ad pass `object_ids: [<ad_id>]`; it publishes ACTIVE under the live ad set; report `PUBLISHING` as handed off, not live); Pipeboard `update_ad` with `status: "ACTIVE"`. Skip if the ad was paused by a kill rule since the request.
 - `set_daily_budget`: official `ads_update_entity` on the ad set; Pipeboard `update_adset` with `daily_budget` (minor units, e.g. cents). Refuse if the new value breaks `budget.daily_budget_cap` or `budget.max_budget_change_pct`, even if ticked.
 - Move the line to `## Done` with the result and timestamp. Pace writes 3 seconds apart.

@@ -21,7 +21,7 @@ flowchart LR
 1. **Research.** Finds competitor apps, tracks them on a PeekPanda board, pulls their long-running static ads and analyzes the images. Meta publishes no spend or results, so days live is the performance proxy.
 2. **Product context.** Everything the factory says about your app comes from `product/*.md`.
 3. **Statics.** GPT Image 2.5 through the Genviral API: `gpt-image-2.5-flare` for cheap concept rounds, `gpt-image-2.5-sunburst` for finals (sharper text, better brand fidelity). Each image is self-reviewed for legible text, brand colors, no fake UI and policy risks.
-4. **Launch.** Creatives and ads are created **paused** with a fixed naming scheme and recorded in a resumable ledger.
+4. **Launch.** Creatives and ads are created as drafts or paused ads (never live) with a fixed naming scheme and recorded in a resumable ledger.
 5. **Daily loop.** One command runs the whole cycle and writes `reports/<date>.md`.
 6. **Review.** Pulls per-ad insights, applies your kill rules with a deterministic script, pauses losers, flags winners and proposes budget changes.
 7. **Competitors in the loop.** Each run looks at competitor ads discovered since the last run.
@@ -80,7 +80,8 @@ All settings live in `factory.config.json`.
 |---|---|
 | `app.app_store_id`, `app.app_store_url` | Your iOS app. Used for competitor lookup and as the ad link |
 | `meta.ad_account_id`, `page_id`, `campaign_id`, `test_ad_set_ids` | Where ads go. The factory only reads the campaign and adds ads to these ad sets |
-| `meta.conversion_action_type` | The `action_type` in Meta insights that counts as a conversion. Check one of your ads' insights once and copy the exact string |
+| `meta.conversion_action_type` | The event that counts as a conversion, e.g. `start_trial_mobile_app`. On the official MCP it must match the `results` indicator of your campaign (`conversions:<event>`) |
+| `meta.ai_disclosure` | `OPT_IN` or `OPT_OUT`: whether your creatives declare AI-generated media. Required in the EU and some US states. It is your call, it is set once per creative and cannot be changed later |
 | `targets.target_cpa` | Your target cost per conversion (for example cost per trial), in account currency |
 | `budget.daily_budget_cap`, `max_budget_change_pct` | Hard limits for budget approvals |
 | `kill_rules.*` | See below |
@@ -151,7 +152,9 @@ node --test scripts/*.test.mjs
 
 **Why go through Genviral instead of OpenAI?** One key, one credit balance, hosted output URLs Meta can fetch, and reference-image handling built in.
 
-**The official Meta MCP has no image upload tool. Does that break launching?** Meta documents `ads_create_creative` as a single-image link ad creative but no upload tool. `launch-ads` checks the tool's input schema at run time: if it takes an image URL, it passes the Genviral image URL; if it only takes an image hash, it asks you to upload the image in Ads Manager or use Pipeboard, which has `upload_ad_image`.
+**How do images get to Meta?** The official MCP's `ads_creative_upload_media` takes a public image URL. Genviral returns one for every image, so the factory uploads it by URL and builds the creative from the returned image hash.
+
+**Why do new ads show up as drafts?** The official MCP stages new ads in your Ads Manager draft. Nothing serves until an approved activation publishes it. Pipeboard creates real ads with status PAUSED instead.
 
 **Android?** PeekPanda covers iOS apps. Your ads can still target any platform your ad set targets.
 
