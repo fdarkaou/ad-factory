@@ -1,0 +1,24 @@
+# Secrets and local config
+.env
+.env.*
+!.env.example
+.mcp.json
+factory.config.json
+.claude/settings.local.json
+
+# Runtime output (keep the folders)
+state/*
+!state/.gitkeep
+creatives/*
+!creatives/.gitkeep
+reports/*
+!reports/.gitkeep
+research/*
+!research/.gitkeep
+
+# Your product pack stays private by default. Remove these lines if you want to commit it.
+product/assets/*
+!product/assets/README.md
+
+.DS_Store
+node_modules/

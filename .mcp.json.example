@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "peekpanda": {
+      "type": "http",
+      "url": "https://mcp.peekpanda.com/mcp"
+    },
+    "meta-ads": {
+      "type": "http",
+      "url": "https://mcp.facebook.com/ads"
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "app": {
+    "name": "Your App",
+    "app_store_id": "0000000000",
+    "app_store_url": "https://apps.apple.com/app/id0000000000",
+    "platform": "ios"
+  },
+  "meta": {
+    "ad_account_id": "act_0000000000",
+    "page_id": "0000000000",
+    "instagram_user_id": null,
+    "campaign_id": "0000000000",
+    "test_ad_set_ids": ["0000000000"],
+    "call_to_action": "INSTALL_MOBILE_APP",
+    "conversion_action_type": "app_custom_event.fb_mobile_start_trial",
+    "currency": "USD"
+  },
+  "targets": {
+    "metric": "cost_per_trial",
+    "target_cpa": 20
+  },
+  "budget": {
+    "daily_budget_cap": 100,
+    "max_budget_change_pct": 20
+  },
+  "kill_rules": {
+    "min_age_days": 3,
+    "no_conversion_spend_multiple": 2,
+    "high_cpa_spend_multiple": 3,
+    "high_cpa_ratio": 1.5,
+    "winner_min_conversions": 5,
+    "winner_cpa_ratio": 1
+  },
+  "cadence": {
+    "runs_per_day": 1,
+    "local_time": "07:00",
+    "timezone": "America/New_York",
+    "insights_window_days": 7
+  },
+  "creative": {
+    "new_ads_per_run": 4,
+    "max_active_ads_per_ad_set": 8,
+    "angles_per_run": { "exploit": 2, "explore": 1 },
+    "concepts_per_angle": 3,
+    "aspect_ratios": ["1:1", "4:5", "9:16"],
+    "launch_aspect": "4:5"
+  },
+  "image_models": {
+    "concept": { "model_id": "openai/gpt-image-2.5-flare", "quality": "low", "size": "1K" },
+    "final": { "model_id": "openai/gpt-image-2.5-sunburst", "quality": "high", "size": "2K" }
+  },
+  "research": {
+    "board_name": "ad-factory competitors",
+    "max_tracked_competitors": 5,
+    "competitor_store_ids": [],
+    "ad_formats": ["image", "dynamic", "carousel"],
+    "min_run_days": 14
+  },
+  "meta_api": {
+    "min_seconds_between_writes": 3,
+    "cooldown_minutes_on_rate_limit": 20,
+    "rate_limit_error_codes": [17, 80004, 613]
+  }
+}
