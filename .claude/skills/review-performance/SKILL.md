@@ -29,7 +29,10 @@ description: Pull per-ad Meta insights for the factory's ads, apply the kill rul
    | `pause` (`cpa_too_high`) | spend >= `high_cpa_spend_multiple` x target and CPA > `high_cpa_ratio` x target |
    | `winner` | conversions >= `winner_min_conversions` and CPA <= `winner_cpa_ratio` x target |
    | `keep` | none of the above |
-5. **Pause losers (automatic).** For each `pause`: official `ads_update_entity` with status `PAUSED`; Pipeboard `update_ad` with `status: "PAUSED"`. `sleep 3` between writes. Update the ledger row with `verdict`, `verdict_at` and the numbers.
+5. **Pause losers (automatic).** For each `pause`:
+   - Official MCP: `ads_update_entity` with `entity_type: "ad"` and `fields: {"status": "PAUSED"}`. In draft mode (`is_draft: true` in the result) the pause is only staged, so publish exactly that ad with `ads_activate_entity` (`entity_id` = the ad id, `object_ids: [<ad_id>]`). Publishing a staged pause applies PAUSED; it does not turn the ad on. Read the ad back once in the next step's batch read to confirm `status: PAUSED`.
+   - Pipeboard: `update_ad` with `status: "PAUSED"`.
+   `sleep 3` between writes. Update the ledger row with `verdict`, `verdict_at` and the numbers.
 6. **Winners.** Mark them in the ledger. If the ad set has at least one winner and total spend is under `budget.daily_budget_cap`, add one `set_daily_budget` approval: current budget up by at most `budget.max_budget_change_pct`, capped at `daily_budget_cap`. Never change a budget directly.
 7. **Learnings.** Append a dated entry to `product/learnings.md`: which angles won or lost, with ad names and numbers. Evidence only.
 8. Return a summary table (ad, verdict, rule, spend, conversions, CPA) for the report.

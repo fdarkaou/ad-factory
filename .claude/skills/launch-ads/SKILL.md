@@ -45,5 +45,5 @@ The human approves by changing `[ ]` to `[x]`, or by telling Claude "approve APR
 ## Applying approvals
 Run this at the start of every daily loop and whenever the user asks.
 - `activate_ad`: official `ads_activate_entity` (for a draft ad pass `object_ids: [<ad_id>]`; it publishes ACTIVE under the live ad set; report `PUBLISHING` as handed off, not live); Pipeboard `update_ad` with `status: "ACTIVE"`. Skip if the ad was paused by a kill rule since the request.
-- `set_daily_budget`: official `ads_update_entity` on the ad set; Pipeboard `update_adset` with `daily_budget` (minor units, e.g. cents). Refuse if the new value breaks `budget.daily_budget_cap` or `budget.max_budget_change_pct`, even if ticked.
+- `set_daily_budget`: official `ads_update_entity` on the ad set (in draft mode also publish that ad set with `ads_activate_entity` and `object_ids: [<ad_set_id>]`); Pipeboard `update_adset` with `daily_budget` (minor units, e.g. cents). Refuse if the new value breaks `budget.daily_budget_cap` or `budget.max_budget_change_pct`, even if ticked.
 - Move the line to `## Done` with the result and timestamp. Pace writes 3 seconds apart.
