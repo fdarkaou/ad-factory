@@ -54,7 +54,7 @@
     "max_tracked_competitors": 5,
     "competitor_store_ids": [],
     "ad_formats": ["image", "dynamic", "carousel"],
-    "min_run_days": 14
+    "min_run_days": 30
   },
   "meta_api": {
     "min_seconds_between_writes": 3,
