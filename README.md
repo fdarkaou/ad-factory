@@ -109,14 +109,31 @@ Pauses happen automatically. Winners trigger a budget proposal that waits for yo
 
 **Claude Code routines (recommended).** In Claude Code run `/schedule` and create a daily routine with the prompt `run the daily-loop skill`. Routines run in the cloud on a checkout of your repo, so make sure that environment has the PeekPanda and Meta connectors and `GENVIRAL_API_KEY`, and that `state/`, `reports/` and `research/` persist between runs (for example a private fork where the routine commits them).
 
-**Local cron or launchd.** Keeps all state on your machine:
+**Scheduled task in the Claude desktop app.** Keeps all state on your machine and uses the app's own login, so it doesn't break when a terminal login expires. Create a daily task with the prompt `run the daily-loop skill` and this repo as the folder. It only runs while the computer is awake.
+
+**Local cron or launchd.** Also keeps state local:
 
 ```cron
 # crontab -e : every day at 07:00
 0 7 * * * cd /path/to/my-ad-factory && set -a && . ./.env && set +a && claude -p "run the daily-loop skill" >> reports/cron.log 2>&1
 ```
 
-On macOS you can wrap the same command in a launchd agent with `StartCalendarInterval`. Unattended runs use exactly the same approval gates: nothing is activated and no budget changes without a ticked approval.
+On macOS you can wrap the same command in a launchd agent with `StartCalendarInterval`. `claude -p` fails once its login expires, and the only trace is in `reports/cron.log`, so check that file after the first few runs.
+
+Unattended runs use exactly the same approval gates: nothing is activated and no budget changes without a ticked approval.
+
+## Meta gotchas
+
+Things that went wrong on a real account while building this. The skills handle what they can; the rest is setup you do once.
+
+- **The connector has to be where Claude runs.** A Meta MCP added with `claude mcp add` in the terminal doesn't appear in the Claude desktop app. Add `https://mcp.facebook.com/ads` as a custom connector in claude.ai settings to use it everywhere.
+- **App install ad sets need the app.** Meta rejects the ad set without a promoted object: your Meta application ID and store URL. On iOS the application ID is `FacebookAppID` in the app's `Info.plist`.
+- **Age limits can turn into suggestions.** With Advantage+ audience on, an age minimum is a suggestion Meta may ignore. Set the minimum age as a hard limit and check the ad set in Ads Manager after creating it.
+- **Some placements are gone.** Meta may list Instagram Explore and then reject it. Leave it out.
+- **Attribution has to match the campaign.** If the ad set's attribution setting doesn't match its campaign, the create call fails. Copy the campaign's setting.
+- **Draft mode applies to every change.** Pauses and budget changes are staged in Ads Manager until they're published with `ads_activate_entity` and `object_ids`. The skills publish them; if you pause by hand through the MCP, publish too.
+- **Money is in the account's currency.** Set `meta.currency` and every target and cap in that currency. $50 a day on a euro account is about €43.
+- **Never poll.** Checking async status in a loop, or reading the account while another process writes to it, trips Meta's request limit (error 17 or 80004). That blocks the account for up to an hour, and repeating it can get it restricted.
 
 ## Safety
 
